@@ -33,6 +33,8 @@ object VcfFile {
   
   def fromFile(filename: String): Try[VcfFile] = fromSource(Source.fromFile(filename))
 
+  val numFixedColumns = 8  
+  
   //NB: Use a by-name param so we have to worry less about whether the passsed Source
   //is exhausted and is reset-able.
   //TODO: properly close the Source
@@ -49,13 +51,19 @@ object VcfFile {
       Tries.sequenceIgnoringFailures(headers.map(f)).map(_.headOption.get)
     }
     
-    def extractInfos: Try[Seq[Info]] = {
-      def isInfo(line: String): Boolean = line.startsWith("INFO")
+    def extractSeq[T](expectedPrefix: String, parse: String => Try[T]): Try[Seq[T]] = {
+      def isValid(line: String): Boolean = line.startsWith(expectedPrefix)
       
-      val attempts = metaLines.filter(isInfo).map(Info.fromString)
+      val attempts = metaLines.filter(isValid).map(parse)
       
       Tries.sequence(attempts)
     }
+    
+    def extractInfos: Try[Seq[Info]] = extractSeq("INFO", Info.fromString)
+    
+    def extractFilters: Try[Seq[Filter]] = extractSeq("FILTER", Filter.fromString)
+    
+    def extractFormats: Try[Seq[Format]] = extractSeq("FORMAT", Format.fromString)
     
     for {
       format <- singleHeader(extractFileFormat)
@@ -64,8 +72,22 @@ object VcfFile {
       reference <- singleHeader(extractReference)
       phasing <- singleHeader(extractPhasing)
       infos <- extractInfos
+      filters <- extractFilters
+      formats <- extractFormats
     } yield {
-      VcfFile(format, date, source, reference, phasing, infos, Seq.empty, Seq.empty, Seq.empty, Seq.empty, Seq.empty)
+      val headerLine = headers.last
+      
+      val headerParts = headerLine.split("\\s+")
+      
+      val columns = headerParts.take(numFixedColumns).toVector
+      
+      val nonColumns = headerParts.drop(numFixedColumns)
+      
+      val formatColumnPresent = nonColumns.headOption.exists(_ == "FORMAT")
+      
+      val sampleIds = nonColumns.drop(1).toVector.map(Id(_))
+      
+      VcfFile(format, date, source, reference, phasing, infos, filters, formats, columns, sampleIds, Seq.empty)
     }
   }
   

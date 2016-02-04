@@ -30,8 +30,26 @@ final class VcfFileSuite extends FunSuite {
       Info(Id("AA"), Some(1), Type.String, "Ancestral Allele"),
       Info(Id("DB"), Some(0), Type.Flag, "dbSNP membership, build 129"),
       Info(Id("H2"), Some(0), Type.Flag, "HapMap2 membership"))
-      
+
     assert(vcf.infos == expectedInfos)
+
+    val expectedFilters = Seq(
+      Filter(Id("q10"), "Quality below 10"),
+      Filter(Id("s50"), "Less than 50% of samples have data"))
+
+    assert(vcf.filters == expectedFilters)
+
+    val expectedFormats = Seq(
+      Format(Id("GT"), Some(1), Type.String, "Genotype"),
+      Format(Id("GQ"), Some(1), Type.Integer, "Genotype Quality"),
+      Format(Id("DP"), Some(1), Type.Integer, "Read Depth"),
+      Format(Id("HQ"), Some(2), Type.Integer, "Haplotype Quality"))
+
+    assert(vcf.formats == expectedFormats)
+    
+    assert(vcf.columns == Seq("CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO"))
+    
+    assert(vcf.sampleIds == Seq(Id("NA00001"), Id("NA00002"), Id("NA00003")))
   }
 }
 
