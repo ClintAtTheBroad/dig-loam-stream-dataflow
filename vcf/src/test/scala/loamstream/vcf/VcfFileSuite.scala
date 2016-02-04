@@ -46,10 +46,19 @@ final class VcfFileSuite extends FunSuite {
       Format(Id("HQ"), Some(2), Type.Integer, "Haplotype Quality"))
 
     assert(vcf.formats == expectedFormats)
-    
+
     assert(vcf.columns == Seq("CHROM", "POS", "ID", "REF", "ALT", "QUAL", "FILTER", "INFO"))
-    
+
     assert(vcf.sampleIds == Seq(Id("NA00001"), Id("NA00002"), Id("NA00003")))
+
+    val expectedRows = Seq(
+      Row(Some(20), Some(14370), Some(Id("rs6054257")), Some("G"), Some("A"), Some("29"), None, Some(Id("NS=3;DP=14;AF=0.5;DB;H2")), Some(Id("GT:GQ:DP:HQ")), Seq("0|0:48:1:51,51", "1|0:48:8:51,51", "1/1:43:5:.,.")),
+      Row(Some(20), Some(17330), None, Some("T"), Some("A"), Some("3"), Some(Id("q10")), Some(Id("NS=3;DP=11;AF=0.017")), Some(Id("GT:GQ:DP:HQ")), Seq("0|0:49:3:58,50", "0|1:3:5:65,3", "0/0:41:3")),
+      Row(Some(20), Some(1110696), Some(Id("rs6040355")), Some("A"), Some("G,T"), Some("67"), None, Some(Id("NS=2;DP=10;AF=0.333,0.667;AA=T;DB")), Some(Id("GT:GQ:DP:HQ")), Seq("1|2:21:6:23,27", "2|1:2:0:18,2", "2/2:35:4")),
+      Row(Some(20), Some(1230237), None, Some("T"), None, Some("47"), None, Some(Id("NS=3;DP=13;AA=T")), Some(Id("GT:GQ:DP:HQ")), Seq("0|0:54:7:56,60", "0|0:48:4:51,51", "0/0:61:2")),
+      Row(Some(20), Some(1234567), Some(Id("microsat1")), Some("GTCT"), Some("G,GTACT"), Some("50"), None, Some(Id("NS=3;DP=9;AA=G")), Some(Id("GT:GQ:DP")), Seq("0/1:35:4", "0/2:17:2", "1/1:40:3")))
+      
+    assert(vcf.rows == expectedRows)
   }
 }
 

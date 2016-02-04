@@ -25,10 +25,11 @@ final case class VcfFile(
     formats: Seq[Format],
     columns: Seq[String],
     sampleIds: Seq[Id],
-    rows: Seq[Any]
+    rows: Seq[Row]
 )
 
 object VcfFile {
+  
   def fromString(data: String): Try[VcfFile] = fromSource(Source.fromString(data))
   
   def fromFile(filename: String): Try[VcfFile] = fromSource(Source.fromFile(filename))
@@ -65,6 +66,11 @@ object VcfFile {
     
     def extractFormats: Try[Seq[Format]] = extractSeq("FORMAT", Format.fromString)
     
+    def extractRows: Seq[Row] = {
+      //NB: Ignore parsing failures, so we can stream rows simply
+      nonHeaders.flatMap(line => Row.fromString(line).toOption.iterator).toStream
+    }
+    
     for {
       format <- singleHeader(extractFileFormat)
       date <- singleHeader(extractFileDate)
@@ -87,7 +93,9 @@ object VcfFile {
       
       val sampleIds = nonColumns.drop(1).toVector.map(Id(_))
       
-      VcfFile(format, date, source, reference, phasing, infos, filters, formats, columns, sampleIds, Seq.empty)
+      val rows = extractRows
+      
+      VcfFile(format, date, source, reference, phasing, infos, filters, formats, columns, sampleIds, rows)
     }
   }
   
